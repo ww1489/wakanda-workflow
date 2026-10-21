@@ -1,0 +1,69 @@
+{
+  "name": "@coze-arch/idl",
+  "version": "0.0.1",
+  "description": "idl descriptions ",
+  "license": "Apache-2.0",
+  "author": "fanwenjie.fe@bytedance.com",
+  "maintainers": [],
+  "exports": {
+    "./debugger_api": "./src/auto-generated/debugger_api/index.ts",
+    "./developer_api": "./src/auto-generated/developer_api/index.ts",
+    "./intelligence_api": "./src/auto-generated/intelligence_api/index.ts",
+    "./memory": "./src/auto-generated/memory/index.ts",
+    "./pat_permission_api": "./src/auto-generated/pat_permission_api/index.ts",
+    "./playground_api": "./src/auto-generated/playground_api/index.ts",
+    "./plugin_develop": "./src/auto-generated/plugin_develop/index.ts",
+    "./product_api": "./src/auto-generated/product_api/index.ts",
+    "./trade": "./src/auto-generated/trade/index.ts",
+    "./ui_builder": "./src/auto-generated/ui_builder/index.ts",
+    "./workflow_api": "./src/auto-generated/workflow_api/index.ts"
+  },
+  "main": "src/index.ts",
+  "typesVersions": {
+    "*": {
+      "debugger_api": [
+        "./src/auto-generated/debugger_api/index.ts"
+      ],
+      "developer_api": [
+        "./src/auto-generated/developer_api/index.ts"
+      ],
+      "intelligence_api": [
+        "./src/auto-generated/intelligence_api/index.ts"
+      ],
+      "memory": [
+        "./src/auto-generated/memory/index.ts"
+      ],
+      "pat_permission_api": [
+        "./src/auto-generated/pat_permission_api/index.ts"
+      ],
+      "playground_api": [
+        "./src/auto-generated/playground_api/index.ts"
+      ],
+      "plugin_develop": [
+        "./src/auto-generated/plugin_develop/index.ts"
+      ],
+      "product_api": [
+        "./src/auto-generated/product_api/index.ts"
+      ],
+      "trade": [
+        "./src/auto-generated/trade/index.ts"
+      ],
+      "ui_builder": [
+        "./src/auto-generated/ui_builder/index.ts"
+      ],
+      "workflow_api": [
+        "./src/auto-generated/workflow_api/index.ts"
+      ]
+    }
+  },
+  "scripts": {
+    "build": "exit 0",
+    "lint": "eslint ./ --cache",
+    "test:cov": "exit 0"
+  },
+  "devDependencies": {
+    "@coze-arch/eslint-config": "workspace:*",
+    "@coze-arch/ts-config": "workspace:*",
+    "@types/node": "^18"
+  }
+}

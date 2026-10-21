@@ -1,0 +1,76 @@
+{
+  "name": "@coze-arch/bot-api",
+  "version": "0.0.1",
+  "description": "RPC wrapper for bot studio application",
+  "author": "fanwenjie.fe@bytedance.com",
+  "exports": {
+    ".": "./src/index.ts",
+    "./developer_api": "./src/idl/developer_api.ts",
+    "./playground_api": "./src/idl/playground_api.ts",
+    "./memory": "./src/idl/memory.ts",
+    "./plugin_develop": "./src/idl/plugin_develop.ts",
+    "./debugger_api": "./src/idl/debugger_api.ts",
+    "./workflow_api": "./src/idl/workflow_api.ts",
+    "./trade": "./src/idl/trade.ts",
+    "./pat_permission_api": "./src/idl/pat_permission_api.ts",
+    "./ui-builder": "./src/idl/ui-builder"
+  },
+  "main": "./src/index.ts",
+  "typesVersions": {
+    "*": {
+      "developer_api": [
+        "./src/idl/developer_api.ts"
+      ],
+      "playground_api": [
+        "./src/idl/playground_api.ts"
+      ],
+      "memory": [
+        "./src/idl/memory.ts"
+      ],
+      "plugin_develop": [
+        "./src/idl/plugin_develop.ts"
+      ],
+      "debugger_api": [
+        "./src/idl/debugger_api.ts"
+      ],
+      "trade": [
+        "./src/idl/trade.ts"
+      ],
+      "workflow_api": [
+        "./src/idl/workflow_api.ts"
+      ],
+      "pat_permission_api": [
+        "./src/idl/pat_permission_api.ts"
+      ],
+      "ui-builder": [
+        "./src/idl/ui-builder.ts"
+      ]
+    }
+  },
+  "scripts": {
+    "build": "exit 0",
+    "lint": "eslint ./ --cache",
+    "test": "vitest --run --passWithNoTests",
+    "test:cov": "npm run test -- --coverage"
+  },
+  "dependencies": {
+    "@coze-arch/bot-http": "workspace:*",
+    "@coze-arch/bot-semi": "workspace:*",
+    "@coze-arch/idl": "workspace:*",
+    "axios": "^1.4.0"
+  },
+  "devDependencies": {
+    "@coze-arch/eslint-config": "workspace:*",
+    "@coze-arch/fs-enhance": "workspace:*",
+    "@coze-arch/logger": "workspace:*",
+    "@coze-arch/ts-config": "workspace:*",
+    "@coze-arch/vitest-config": "workspace:*",
+    "@types/node": "^18",
+    "@vitest/coverage-v8": "~3.0.5",
+    "debug": "^4.3.4",
+    "sucrase": "^3.32.0",
+    "tsconfig-paths": "4.1.0",
+    "vitest": "~3.0.5"
+  },
+  "// deps": "debug@^4.3.4 为脚本自动补齐，请勿改动"
+}

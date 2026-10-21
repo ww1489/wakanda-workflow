@@ -1,0 +1,142 @@
+/*
+ * Copyright 2025 coze-dev Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package plugin
+
+import (
+	"context"
+
+	pluginAPI "github.com/coze-dev/coze-studio/backend/api/model/plugin_develop"
+	common "github.com/coze-dev/coze-studio/backend/api/model/plugin_develop/common"
+
+	"github.com/coze-dev/coze-studio/backend/application/base/ctxutil"
+	"github.com/coze-dev/coze-studio/backend/crossdomain/plugin/model"
+	"github.com/coze-dev/coze-studio/backend/domain/plugin/dto"
+
+	"github.com/coze-dev/coze-studio/backend/pkg/errorx"
+	"github.com/coze-dev/coze-studio/backend/pkg/lang/ptr"
+
+	"github.com/coze-dev/coze-studio/backend/types/errno"
+)
+
+func (p *PluginApplicationService) PublishPlugin(ctx context.Context, req *pluginAPI.PublishPluginRequest) (resp *pluginAPI.PublishPluginResponse, err error) {
+	_, err = p.validateDraftPluginAccess(ctx, req.PluginID)
+	if err != nil {
+		return nil, errorx.Wrapf(err, "validatePublishPluginRequest failed")
+	}
+
+	err = p.DomainSVC.PublishPlugin(ctx, &model.PublishPluginRequest{
+		PluginID:    req.PluginID,
+		Version:     req.VersionName,
+		VersionDesc: req.VersionDesc,
+	})
+	if err != nil {
+		return nil, errorx.Wrapf(err, "PublishPlugin failed, pluginID=%d", req.PluginID)
+	}
+
+	resp = &pluginAPI.PublishPluginResponse{}
+
+	return resp, nil
+}
+
+func (p *PluginApplicationService) DelPlugin(ctx context.Context, req *pluginAPI.DelPluginRequest) (resp *pluginAPI.DelPluginResponse, err error) {
+	_, err = p.validateDraftPluginAccess(ctx, req.PluginID)
+	if err != nil {
+		return nil, errorx.Wrapf(err, "validateDelPluginRequest failed")
+	}
+
+	err = p.DomainSVC.DeleteDraftPlugin(ctx, req.PluginID)
+	if err != nil {
+		return nil, errorx.Wrapf(err, "DeleteDraftPlugin failed, pluginID=%d", req.PluginID)
+	}
+
+	resp = &pluginAPI.DelPluginResponse{}
+
+	return resp, nil
+}
+
+func (p *PluginApplicationService) GetPluginNextVersion(ctx context.Context, req *pluginAPI.GetPluginNextVersionRequest) (resp *pluginAPI.GetPluginNextVersionResponse, err error) {
+	_, err = p.validateDraftPluginAccess(ctx, req.PluginID)
+	if err != nil {
+		return nil, errorx.Wrapf(err, "validateGetPluginNextVersionRequest failed")
+	}
+
+	nextVersion, err := p.DomainSVC.GetPluginNextVersion(ctx, req.PluginID)
+	if err != nil {
+		return nil, errorx.Wrapf(err, "GetPluginNextVersion failed, pluginID=%d", req.PluginID)
+	}
+	resp = &pluginAPI.GetPluginNextVersionResponse{
+		NextVersionName: nextVersion,
+	}
+	return resp, nil
+}
+
+func (p *PluginApplicationService) GetDevPluginList(ctx context.Context, req *pluginAPI.GetDevPluginListRequest) (resp *pluginAPI.GetDevPluginListResponse, err error) {
+
+	uid := ctxutil.GetUIDFromCtx(ctx)
+	if uid == nil {
+		return nil, errorx.New(errno.ErrPluginPermissionCode, errorx.KV(errno.PluginMsgKey, "session is required"))
+	}
+
+	pageInfo := dto.PageInfo{
+		Name:       req.Name,
+		Page:       int(req.GetPage()),
+		Size:       int(req.GetSize()),
+		OrderByACS: ptr.Of(false),
+	}
+	if req.GetOrderBy() == common.OrderBy_UpdateTime {
+		pageInfo.SortBy = ptr.Of(dto.SortByUpdatedAt)
+	} else {
+		pageInfo.SortBy = ptr.Of(dto.SortByCreatedAt)
+	}
+
+	res, err := p.DomainSVC.ListDraftPlugins(ctx, &dto.ListDraftPluginsRequest{
+		SpaceID:     req.SpaceID,
+		APPID:       req.ProjectID,
+		DeveloperID: *uid,
+		PageInfo:    pageInfo,
+	})
+	if err != nil {
+		return nil, errorx.Wrapf(err, "ListDraftPlugins failed, spaceID=%d, appID=%d", req.SpaceID, req.ProjectID)
+	}
+
+	pluginList := make([]*common.PluginInfoForPlayground, 0, len(res.Plugins))
+	for _, pl := range res.Plugins {
+
+		if pl.DeveloperID > 0 && pl.DeveloperID != *uid {
+			return nil, errorx.New(errno.ErrPluginPermissionCode, errorx.KV(errno.PluginMsgKey, "plugin developer is not current user"))
+		}
+		tools, err := p.toolRepo.GetPluginAllDraftTools(ctx, pl.ID)
+		if err != nil {
+			return nil, errorx.Wrapf(err, "GetPluginAllDraftTools failed, pluginID=%d", pl.ID)
+		}
+
+		pluginInfo, err := p.toPluginInfoForPlayground(ctx, pl, tools)
+		if err != nil {
+			return nil, err
+		}
+
+		pluginInfo.VersionTs = "0" // when you get the plugin information in the project, version ts is set to 0 by default
+		pluginList = append(pluginList, pluginInfo)
+	}
+
+	resp = &pluginAPI.GetDevPluginListResponse{
+		PluginList: pluginList,
+		Total:      res.Total,
+	}
+
+	return resp, nil
+}

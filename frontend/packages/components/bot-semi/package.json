@@ -1,0 +1,124 @@
+{
+  "name": "@coze-arch/bot-semi",
+  "version": "0.0.1",
+  "description": "Wrapper components for semi",
+  "license": "Apache-2.0",
+  "author": "liukaizhan@bytedance.com",
+  "maintainers": [],
+  "exports": {
+    ".": "./src/index.ts",
+    "./Breadcrumb": "./src/semi/breadcrumb.ts",
+    "./Button": "./src/semi/button.ts",
+    "./Cascader": "./src/semi/cascader.ts",
+    "./Form": "./src/semi/form.ts",
+    "./Grid": "./src/semi/grid.ts",
+    "./Input": "./src/semi/input.ts",
+    "./Popover": "./src/semi/popover.ts",
+    "./Radio": "./src/semi/radio.ts",
+    "./Select": "./src/semi/select.ts",
+    "./Slider": "./src/semi/slider.ts",
+    "./Table": "./src/semi/table.ts",
+    "./Tag": "./src/semi/tag.ts",
+    "./Tooltip": "./src/semi/tooltip.ts",
+    "./Tree": "./src/semi/tree.ts",
+    "./TreeSelect": "./src/semi/tree-select.ts",
+    "./Upload": "./src/semi/upload.ts"
+  },
+  "main": "src/index.ts",
+  "typesVersions": {
+    "*": {
+      ".": [
+        "./src/index.ts"
+      ],
+      "Breadcrumb": [
+        "./src/semi/breadcrumb.ts"
+      ],
+      "Button": [
+        "./src/semi/button.ts"
+      ],
+      "Cascader": [
+        "./src/semi/cascader.ts"
+      ],
+      "Form": [
+        "./src/semi/form.ts"
+      ],
+      "Grid": [
+        "./src/semi/grid.ts"
+      ],
+      "Input": [
+        "./src/semi/input.ts"
+      ],
+      "Popover": [
+        "./src/semi/popover.ts"
+      ],
+      "Radio": [
+        "./src/semi/radio.ts"
+      ],
+      "Select": [
+        "./src/semi/select.ts"
+      ],
+      "Slider": [
+        "./src/semi/slider.ts"
+      ],
+      "Table": [
+        "./src/semi/table.ts"
+      ],
+      "Tag": [
+        "./src/semi/tag.ts"
+      ],
+      "Tooltip": [
+        "./src/semi/tooltip.ts"
+      ],
+      "Tree": [
+        "./src/semi/tree.ts"
+      ],
+      "TreeSelect": [
+        "./src/semi/tree-select.ts"
+      ],
+      "Upload": [
+        "./src/semi/upload.ts"
+      ]
+    }
+  },
+  "scripts": {
+    "build": "exit 0",
+    "lint": "eslint ./ --cache",
+    "test": "vitest --run --passWithNoTests",
+    "test:cov": "npm run test --coverage"
+  },
+  "dependencies": {
+    "@coze-arch/bot-icons": "workspace:*",
+    "@coze-arch/i18n": "workspace:*",
+    "@douyinfe/semi-icons": "^2.36.0",
+    "@douyinfe/semi-illustrations": "^2.36.0",
+    "@douyinfe/semi-ui": "~2.72.3",
+    "ahooks": "^3.7.8",
+    "classnames": "^2.3.2",
+    "lodash-es": "^4.17.21",
+    "react": "~18.2.0",
+    "react-dom": "~18.2.0",
+    "react-markdown": "^8.0.3"
+  },
+  "devDependencies": {
+    "@coze-arch/bot-typings": "workspace:*",
+    "@coze-arch/eslint-config": "workspace:*",
+    "@coze-arch/stylelint-config": "workspace:*",
+    "@coze-arch/ts-config": "workspace:*",
+    "@coze-arch/vitest-config": "workspace:*",
+    "@rsbuild/core": "1.1.13",
+    "@types/lodash-es": "^4.17.10",
+    "@types/node": "18.18.9",
+    "@types/react": "18.2.37",
+    "@types/react-dom": "18.2.15",
+    "@types/react-helmet": "^6.1.11",
+    "@vitest/coverage-v8": "~3.0.5",
+    "acorn": "^8.12.1",
+    "react-helmet": "^6.1.0",
+    "react-is": ">= 16.8.0",
+    "styled-components": ">= 2",
+    "typescript": "~5.8.2",
+    "utility-types": "^3.10.0",
+    "vitest": "~3.0.5",
+    "webpack": "~5.91.0"
+  }
+}

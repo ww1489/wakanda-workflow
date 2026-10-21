@@ -1,0 +1,175 @@
+name: coze-studio-debug
+
+x-env-file: &env_file
+  - .env.debug
+
+services:
+  mysql:
+    image: mysql:8.4.5
+    container_name: coze-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-opencoze}
+      MYSQL_USER: ${MYSQL_USER:-coze}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-coze123}
+    profiles: ['middleware', 'mysql-setup', 'mysql']
+    env_file: *env_file
+    ports:
+      - '127.0.0.1:3306:3306'
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+      - ./volumes/mysql/schema.sql:/docker-entrypoint-initdb.d/init.sql
+    command: ["mysqld", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'mysqladmin',
+          'ping',
+          '-h',
+          'localhost',
+          '-u$${MYSQL_USER}',
+          '-p$${MYSQL_PASSWORD}',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - coze-network
+
+  redis:
+    image: bitnamilegacy/redis:8.0
+    container_name: coze-redis
+    user: root
+    privileged: true
+    profiles: ['middleware']
+    env_file: *env_file
+    environment:
+      - REDIS_AOF_ENABLED=${REDIS_AOF_ENABLED:-no}
+      - REDIS_PORT_NUMBER=${REDIS_PORT_NUMBER:-6379}
+      - REDIS_IO_THREADS=${REDIS_IO_THREADS:-4}
+      - ALLOW_EMPTY_PASSWORD=${ALLOW_EMPTY_PASSWORD:-yes}
+    ports:
+      - '127.0.0.1:6379:6379'
+    volumes:
+      - ./data/bitnami/redis:/bitnami/redis/data:rw,Z
+    command: >
+      bash -c "
+        /opt/bitnami/scripts/redis/setup.sh
+        # Set proper permissions for data directories
+        chown -R redis:redis /bitnami/redis/data
+        chmod g+s /bitnami/redis/data
+
+        exec /opt/bitnami/scripts/redis/entrypoint.sh /opt/bitnami/scripts/redis/run.sh
+      "
+    depends_on:
+      minio-setup:
+        condition: service_completed_successfully
+      mysql-setup-init-sql:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+    networks:
+      - coze-network
+
+  minio:
+    image: minio/minio:RELEASE.2025-06-13T11-33-47Z-cpuv1
+    container_name: coze-minio
+    user: root
+    privileged: true
+    profiles: ['middleware']
+    env_file: *env_file
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - ./data/minio:/data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+      MINIO_DEFAULT_BUCKETS: ${STORAGE_BUCKET:-opencoze}
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          '/usr/bin/mc alias set health_check http://localhost:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} && /usr/bin/mc ready health_check',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - coze-network
+
+  minio-setup:
+    image: minio/mc:RELEASE.2025-05-21T01-59-54Z-cpuv1
+    container_name: coze-minio-setup
+    profiles: ['middleware']
+    env_file: *env_file
+    depends_on:
+      minio:
+        condition: service_healthy
+    volumes:
+      - ./volumes/minio/default_icon/:/default_icon
+      - ./volumes/minio/official_plugin_icon/:/official_plugin_icon
+    entrypoint: >
+      /bin/sh -c  "
+        (/usr/bin/mc alias set localminio http://coze-minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} && \
+        /usr/bin/mc mb --ignore-existing localminio/${STORAGE_BUCKET} && \
+        /usr/bin/mc cp --recursive /default_icon/ localminio/${STORAGE_BUCKET}/default_icon/ && \
+        /usr/bin/mc cp --recursive /official_plugin_icon/ localminio/${STORAGE_BUCKET}/official_plugin_icon/ && \
+        echo 'upload files to minio complete: Files uploaded to ${STORAGE_BUCKET} bucket.') || exit 1; \
+      "
+    networks:
+      - coze-network
+    restart: 'no'
+
+  mysql-setup-init-sql:
+    image: mysql:8.4.5
+    container_name: coze-mysql-setup-init-sql
+    profiles: ['middleware', 'mysql-setup', 'run-server']
+    env_file: *env_file
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command:
+      - /bin/sh
+      - -c
+      - |
+        set -ex
+        for i in $$(seq 1 60); do
+          DB_HOST="$${MYSQL_HOST}"
+          if [ "$${MYSQL_HOST}" = "localhost" ] || [ "$${MYSQL_HOST}" = "127.0.0.1" ]; then
+            DB_HOST="mysql"
+          fi
+          if mysql -h "$${DB_HOST}" -P"$${MYSQL_PORT}" -u"$${MYSQL_USER}" -p"$${MYSQL_PASSWORD}" "$${MYSQL_DATABASE}" < /schema.sql; then
+            echo 'MySQL init success.'
+            exit 0
+          fi
+          echo "Retrying to connect to mysql... ($$i/60)"
+          sleep 1
+        done
+        echo 'Failed to init mysql db.'
+        exit 1
+    volumes:
+      - ./volumes/mysql/schema.sql:/schema.sql
+    networks:
+      - coze-network
+    restart: 'no'
+
+  coze-server:
+    build:
+      context: ../
+      dockerfile: backend/Dockerfile
+    image: coze-workflow-server:local
+    profiles: ['build-server']
+
+networks:
+  coze-network:
+    driver: bridge
